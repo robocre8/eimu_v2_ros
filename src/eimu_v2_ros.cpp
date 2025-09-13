@@ -12,10 +12,10 @@ void delay_ms(unsigned long milliseconds)
   usleep(milliseconds * 1000);
 }
 
-class EIMURos : public rclcpp::Node
+class EIMU_V2_ROS : public rclcpp::Node
 {
 public:
-  EIMURos() : Node("eimu_v2_ros")
+  EIMU_V2_ROS() : Node("eimu_v2_ros")
   {
     /*---------------node parameter declaration-----------------------------*/
     this->declare_parameter<std::string>("frame_id", "imu");
@@ -76,7 +76,7 @@ public:
 
     timer_ = this->create_wall_timer(
         std::chrono::microseconds((long)(1000000 / publish_frequency)),
-        std::bind(&EIMURos::publish_imu_callback, this));
+        std::bind(&EIMU_V2_ROS::publish_imu_callback, this));
     /*---------------------------------------------------------------------*/
 
     RCLCPP_INFO(this->get_logger(), "eimu_v2_ros node has started with filterGain: %f", filterGain);
@@ -92,29 +92,33 @@ private:
   {
     messageImu.header.stamp = rclcpp::Clock().now();
 
-    eimuV2.readQuat(data_w, data_x, data_y, data_z);
-    messageImu.orientation.w = data_w;
-    messageImu.orientation.x = data_x;
-    messageImu.orientation.y = data_y;
-    messageImu.orientation.z = data_z;
+    eimuV2.readQuatRPY(qw, qx, qy, qz, r, p, y);
+    messageImu.orientation.w = qw;
+    messageImu.orientation.x = qx;
+    messageImu.orientation.y = qy;
+    messageImu.orientation.z = qz;
 
-    eimuV2.readGyro(data_x, data_y, data_z);
-    messageImu.angular_velocity.x = data_x;
-    messageImu.angular_velocity.y = data_y;
-    messageImu.angular_velocity.z = data_z;
+    rpy.vector.x = r;
+    rpy.vector.y = p;
+    rpy.vector.z = y;
 
-    eimuV2.readAcc(data_x, data_y, data_z);
-    messageImu.linear_acceleration.x = data_x;
-    messageImu.linear_acceleration.y = data_y;
-    messageImu.linear_acceleration.z = data_z;
+    eimuV2.readAccGyro(ax, ay, az, gx, gy, gz);
+    messageImu.angular_velocity.x = gx;
+    messageImu.angular_velocity.y = gy;
+    messageImu.angular_velocity.z = gz;
 
-    geometry_msgs::msg::Vector3Stamped rpy;
-    tf2::Matrix3x3(tf2::Quaternion(
-                       messageImu.orientation.x,
-                       messageImu.orientation.y,
-                       messageImu.orientation.z,
-                       messageImu.orientation.w))
-        .getRPY(rpy.vector.x, rpy.vector.y, rpy.vector.z);
+    messageImu.linear_acceleration.x = ax;
+    messageImu.linear_acceleration.y = ay;
+    messageImu.linear_acceleration.z = az;
+
+    
+    // tf2::Matrix3x3(tf2::Quaternion(
+    //                    messageImu.orientation.x,
+    //                    messageImu.orientation.y,
+    //                    messageImu.orientation.z,
+    //                    messageImu.orientation.w))
+    //     .getRPY(rpy.vector.x, rpy.vector.y, rpy.vector.z);
+    
     rpy.header = messageImu.header;
 
     if (publish_tf_on_map_frame)
@@ -151,6 +155,7 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
 
   sensor_msgs::msg::Imu messageImu = sensor_msgs::msg::Imu();
+  geometry_msgs::msg::Vector3Stamped rpy;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 
   std::string frame_id;
@@ -162,6 +167,7 @@ private:
 
   EIMU_V2 eimuV2;
   float data_w, data_x, data_y, data_z;
+  float qw, qx, qy, qz, r, p, y, ax, ay, az, gx, gy, gz;
   float filterGain;
   int ref_frame_id;
 };
@@ -169,7 +175,7 @@ private:
 int main(int argc, char **argv)
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<EIMURos>(); // MODIFY NAME
+  auto node = std::make_shared<EIMU_V2_ROS>(); // MODIFY NAME
   rclcpp::spin(node);
   rclcpp::shutdown();
   return 0;

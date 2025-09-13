@@ -23,6 +23,8 @@ const uint8_t READ_MAG = 0x11;
 const uint8_t GET_FILTER_GAIN = 0x1E;
 const uint8_t SET_FRAME_ID = 0x1F;
 const uint8_t GET_FRAME_ID = 0x20;
+const uint8_t READ_QUAT_RPY = 0x22;
+const uint8_t READ_ACC_GYRO = 0x23;
 //---------------------------------------------
 
 LibSerial::BaudRate convert_baud_rate(int baud_rate)
@@ -150,6 +152,17 @@ public:
     read_data3(READ_MAG, x, y, z);
   }
 
+  void readQuatRPY(float &qw, float& qx, float &qy, float &qz, float &r, float& p, float &y)
+  {
+    float dummy_data;
+    read_data8(READ_QUAT_RPY, qw, qx, qy, qz, r, p, y, dummy_data);
+  }
+
+  void readAccGyro(float &ax, float &ay, float &az, float &gx, float &gy, float &gz)
+  {
+    read_data6(READ_ACC_GYRO, ax, ay, az, gx, gy, gz);
+  }
+
 private:
   LibSerial::SerialPort serial_conn_;
   int timeout_ms_;
@@ -202,6 +215,32 @@ private:
       std::memcpy(&val3, payload.data() + 12, sizeof(float));
   }
 
+  void read_packet6(float &val0, float &val1, float &val2, float &val3, float &val4, float &val5) {
+      std::vector<uint8_t> payload(24);
+      serial_conn_.Read(payload, 24);
+
+      std::memcpy(&val0, payload.data() + 0, sizeof(float));
+      std::memcpy(&val1, payload.data() + 4, sizeof(float));
+      std::memcpy(&val2, payload.data() + 8, sizeof(float));
+      std::memcpy(&val3, payload.data() + 12, sizeof(float));
+      std::memcpy(&val4, payload.data() + 16, sizeof(float));
+      std::memcpy(&val5, payload.data() + 20, sizeof(float));
+  }
+
+  void read_packet8(float &val0, float &val1, float &val2, float &val3, float &val4, float &val5, float &val6, float &val7) {
+      std::vector<uint8_t> payload(32);
+      serial_conn_.Read(payload, 32);
+
+      std::memcpy(&val0, payload.data() + 0, sizeof(float));
+      std::memcpy(&val1, payload.data() + 4, sizeof(float));
+      std::memcpy(&val2, payload.data() + 8, sizeof(float));
+      std::memcpy(&val3, payload.data() + 12, sizeof(float));
+      std::memcpy(&val4, payload.data() + 16, sizeof(float));
+      std::memcpy(&val5, payload.data() + 20, sizeof(float));
+      std::memcpy(&val6, payload.data() + 24, sizeof(float));
+      std::memcpy(&val7, payload.data() + 28, sizeof(float));
+  }
+
   // ------------------- High-Level Wrappers -------------------
   float write_data1(uint8_t cmd, uint8_t pos, float val) {
       std::vector<uint8_t> payload(sizeof(uint8_t) + sizeof(float));
@@ -239,6 +278,17 @@ private:
       send_packet_without_payload(cmd);
       return read_packet4(a, b, c, d);
   }
+
+  void read_data6(uint8_t cmd, float &a, float &b, float &c, float &d, float &e, float &f) {
+      send_packet_without_payload(cmd);
+      return read_packet6(a, b, c, d, e, f);
+  }
+
+  void read_data8(uint8_t cmd, float &a, float &b, float &c, float &d, float &e, float &f, float &g, float &h) {
+      send_packet_without_payload(cmd);
+      return read_packet8(a, b, c, d, e, f, g, h);
+  }
+
 };
 
 #endif
