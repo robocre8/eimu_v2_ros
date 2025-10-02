@@ -74,6 +74,7 @@ public:
     // Initialize the transform broadcaster
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
+    eimuV2.clearDataBuffer();
     timer_ = this->create_wall_timer(
         std::chrono::microseconds((long)(1000000 / publish_frequency)),
         std::bind(&EIMU_V2_ROS::publish_imu_callback, this));

@@ -25,6 +25,7 @@ const uint8_t SET_FRAME_ID = 0x1F;
 const uint8_t GET_FRAME_ID = 0x20;
 const uint8_t READ_QUAT_RPY = 0x22;
 const uint8_t READ_ACC_GYRO = 0x23;
+const uint8_t CLEAR_DATA_BUFFER = 0x27;
 //---------------------------------------------
 
 LibSerial::BaudRate convert_baud_rate(int baud_rate)
@@ -161,6 +162,12 @@ public:
   void readAccGyro(float &ax, float &ay, float &az, float &gx, float &gy, float &gz)
   {
     read_data6(READ_ACC_GYRO, ax, ay, az, gx, gy, gz);
+  }
+
+  int clearDataBuffer()
+  {
+    float res = write_data1(CLEAR_DATA_BUFFER, 0, 0.0);
+    return (int)res;
   }
 
 private:
