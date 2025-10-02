@@ -20,7 +20,7 @@ public:
     /*---------------node parameter declaration-----------------------------*/
     this->declare_parameter<std::string>("frame_id", "imu");
     this->declare_parameter<std::string>("port", "/dev/ttyUSB0");
-    this->declare_parameter<double>("publish_frequency", 10.0);
+    this->declare_parameter<double>("publish_frequency", 50.0);
     this->declare_parameter<int>("eimu_reference_frame_id", 1);
     this->declare_parameter<bool>("publish_tf_on_map_frame", false);
 
@@ -92,9 +92,8 @@ private:
   {
     messageImu.header.stamp = rclcpp::Clock().now();
 
-    eimuV2.readQuatRPY(qw, qx, qy, qz, r, p, y);
+    eimuV2.readRPY(r, p, y);
     
-
     rpy.vector.x = r;
     rpy.vector.y = p;
     rpy.vector.z = y;
@@ -174,8 +173,8 @@ private:
   bool publish_tf_on_map_frame;
 
   EIMU_V2 eimuV2;
-  float data_w, data_x, data_y, data_z;
-  float qw, qx, qy, qz, r, p, y, ax, ay, az, gx, gy, gz;
+  float data_x, data_y, data_z;
+  float r, p, y, ax, ay, az, gx, gy, gz;
   float filterGain;
   int ref_frame_id;
 };
