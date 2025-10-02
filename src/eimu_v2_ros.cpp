@@ -93,14 +93,22 @@ private:
     messageImu.header.stamp = rclcpp::Clock().now();
 
     eimuV2.readQuatRPY(qw, qx, qy, qz, r, p, y);
-    messageImu.orientation.w = qw;
-    messageImu.orientation.x = qx;
-    messageImu.orientation.y = qy;
-    messageImu.orientation.z = qz;
+    
 
     rpy.vector.x = r;
     rpy.vector.y = p;
     rpy.vector.z = y;
+
+    // Create TF2 quaternion
+    tf2::Quaternion q;
+    q.setRPY(r, p, y); 
+
+    // Fill ROS2 message
+    geometry_msgs::msg::Quaternion q_msg;
+    messageImu.orientation.w = q.w();
+    messageImu.orientation.x = q.x();
+    messageImu.orientation.y = q.y();
+    messageImu.orientation.z = q.z();
 
     eimuV2.readAccGyro(ax, ay, az, gx, gy, gz);
     messageImu.angular_velocity.x = gx;
